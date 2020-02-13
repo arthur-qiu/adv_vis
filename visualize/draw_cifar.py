@@ -39,7 +39,7 @@ def search_direction(model, x, v, image, label,
         perturb_images = np.transpose(perturb_images, (0, 3, 1, 2))
         preds = []
         b_size = perturb_images.shape[0] / 25
-        perturb_images_var = Variable(torch.from_numpy(perturb_images).cuda(), requires_grad=False)
+        perturb_images_var = torch.from_numpy(perturb_images).cuda()
         for i in range(25):
             tmp_perturb_images_var = perturb_images_var[i * b_size: (i + 1) * b_size]
             prob = model(tmp_perturb_images_var)
@@ -134,7 +134,7 @@ for data, target in test_loader:
     data, target = data.cuda(), target.cuda()
 
     adv_data = adversary_test(net, data, target)
-    # adv_data.requires_grad_()
+    adv_data.requires_grad_()
 
     # forward
     output = net(adv_data)
@@ -146,34 +146,48 @@ for data, target in test_loader:
     g = g.transpose(0, 2, 3, 1)
     g = g.squeeze(axis=0)
     label = target[0]
-    filename = 'boundry/gradients/{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)
-    print(filename)
-    pickle.dump(g, open(filename, 'w'), pickle.HIGHEST_PROTOCOL)
+    # filename = 'boundry/gradients/{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)
+    # print(filename)
+    # pickle.dump(g, open(filename, 'w'), pickle.HIGHEST_PROTOCOL)
+    #
+    #
+    # base = 'boundry/gradients/'
+    # u = pickle.load(open(base + '{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)))
 
-
-    result = []
     base = 'boundry/gradients/'
-    u = pickle.load(open(base + '{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)))
+    u = g.copy()
+    result = []
     # normolization
     u /= np.sqrt(np.sum(u ** 2))
-    if os.path.isfile(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)):
-        v = pickle.load(open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)))
-    else:
-        while True:
-            uu = u.reshape(32 * 32 * 3)
-            v = np.random.normal(0, 1, 32 * 32 * 3)
-            v = (v - np.dot(v, uu) * uu)
-            v /= np.sqrt(np.sum(v * v))
-            print('uu dot v', np.sum(uu * v))  # , v
-            if np.abs(np.sum(uu * v)) < 1e-5:
-                v = v.reshape((32, 32, 3))
-                break
-        pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label), 'w'))
+    # if os.path.isfile(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)):
+    #     v = pickle.load(open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)))
+    # else:
+    #     while True:
+    #         uu = u.reshape(32 * 32 * 3)
+    #         v = np.random.normal(0, 1, 32 * 32 * 3)
+    #         v = (v - np.dot(v, uu) * uu)
+    #         v /= np.sqrt(np.sum(v * v))
+    #         print('uu dot v', np.sum(uu * v))  # , v
+    #         if np.abs(np.sum(uu * v)) < 1e-5:
+    #             v = v.reshape((32, 32, 3))
+    #             break
+    #     pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label), 'wb+'))
+
+    while True:
+        uu = u.reshape(32 * 32 * 3)
+        v = np.random.normal(0, 1, 32 * 32 * 3)
+        v = (v - np.dot(v, uu) * uu)
+        v /= np.sqrt(np.sum(v * v))
+        print('uu dot v', np.sum(uu * v))  # , v
+        if np.abs(np.sum(uu * v)) < 1e-5:
+            v = v.reshape((32, 32, 3))
+            break
+    pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label), 'wb+'))
 
     samples = 255 / 0.2
 
     rmse = np.sqrt((u ** 2).mean())
-    temp_image = adv_data[0].transpose(1, 2, 0)
+    temp_image = adv_data.detach().cpu().numpy()[0].transpose(1, 2, 0)
     for i in tqdm.trange(-int(samples), int(samples)):
         assert u.shape == v.shape
         x = u * i * 0.2 / rmse
@@ -182,14 +196,11 @@ for data, target in test_loader:
         result += [(i * 0.2, t[0], t[1]) for t in a]
 
     outfile = 'boundry/swipe-for-{}-{}-{}-{}-cifar.pickle'.format(data_type, opt.model, index, label)
-    pickle.dump(result, open(outfile, 'w'), pickle.HIGHEST_PROTOCOL)
+    pickle.dump(result, open(outfile, 'wb+'), pickle.HIGHEST_PROTOCOL)
 
 
     points = pickle.load(open(outfile))
     print('loading', opt.model, 'done.')
-
-    data = {}
-    data['mnist'] = points
 
     print(points[2550 * 1275 + 1274])
 
@@ -208,7 +219,7 @@ for data, target in test_loader:
     middle = 255 * 5
     plt.figure()
     n, bins, patches = plt.hist(g.flatten(), 10, normed=1, facecolor='green', alpha=0.75)
-    plt.savefig('boundry_figs/mnist/{}_model3_hist.png'.format(data_type), format='png')
+    plt.savefig('boundry_figs/cifar/{}_model3_hist.png'.format(data_type), format='png')
     for bound in [40, 100, 500, 1000, middle]:
         plt.clf()
         plt.figure(figsize=(16,12))
@@ -222,10 +233,9 @@ for data, target in test_loader:
         plt.plot([0, 0], [-255, 255], color='white')
         plt.plot([-255, 255], [0, 0], color='white')
         print("bound:{}, fname:{}".format(bound,data_type))
-        plt.savefig('boundry_figs/mnist/{}_model3_{}.png'.format(data_type, bound), format='png')
+        plt.savefig('boundry_figs/cifar/{}_model3_{}.png'.format(data_type, bound), format='png')
 
 
     break
-
 
 
