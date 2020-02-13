@@ -1,0 +1,8 @@
+.DS_Store
+*.tar
+*.png
+*.pdf
+*.npz
+logs/*
+venv/*
+.idea/*
