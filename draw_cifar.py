@@ -139,7 +139,7 @@ for data, target in test_loader:
     data, target = data.cuda(), target.cuda()
 
     adv_data = adversary_test(net, data, target)
-    # adv_data.requires_grad_()
+    adv_data.requires_grad_()
 
     # forward
     output = net(adv_data)
