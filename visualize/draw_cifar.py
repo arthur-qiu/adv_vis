@@ -119,10 +119,10 @@ if opt.load != '' and os.path.isfile(opt.load):
 else:
     raise Exception("Could not resume")
 
-lr = state['learning_rate']
-optimizer = torch.optim.SGD(
-    net.parameters(), lr, momentum=state['momentum'],
-    weight_decay=state['decay'], nesterov=True)
+# lr = state['learning_rate']
+# optimizer = torch.optim.SGD(
+#     net.parameters(), lr, momentum=state['momentum'],
+#     weight_decay=state['decay'], nesterov=True)
 
 adversary_test = pgd.PGD(epsilon=opt.epsilon * 2, num_steps=opt.test_num_steps, step_size=opt.test_step_size * 2).cuda()
 
@@ -133,7 +133,7 @@ for data, target in test_loader:
     index += 1
     data, target = data.cuda(), target.cuda()
 
-    adv_data = adversary_test(net, data, target)
+    adv_data = adversary_test(net, data, target).detach()
 
     # forward
     output = net(adv_data)
