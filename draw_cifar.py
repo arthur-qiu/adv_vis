@@ -119,6 +119,11 @@ if opt.load != '' and os.path.isfile(opt.load):
 else:
     raise Exception("Could not resume")
 
+lr = state['learning_rate']
+optimizer = torch.optim.SGD(
+    net.parameters(), lr, momentum=state['momentum'],
+    weight_decay=state['decay'], nesterov=True)
+
 # lr = state['learning_rate']
 # optimizer = torch.optim.SGD(
 #     net.parameters(), lr, momentum=state['momentum'],
