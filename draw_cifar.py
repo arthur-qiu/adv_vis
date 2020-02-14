@@ -38,7 +38,7 @@ def search_direction(model, x, v, image, label,
         perturb_images = perturb_images.astype(dtype=np.float32)
         perturb_images = np.transpose(perturb_images, (0, 3, 1, 2))
         preds = []
-        b_size = perturb_images.shape[0] / 25
+        b_size = int(perturb_images.shape[0] / 25)
         perturb_images_var = torch.from_numpy(perturb_images).cuda()
         for i in range(25):
             tmp_perturb_images_var = perturb_images_var[i * b_size: (i + 1) * b_size]
