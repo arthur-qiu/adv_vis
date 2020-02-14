@@ -198,7 +198,8 @@ for data, target in test_loader:
     pickle.dump(result, open(outfile, 'wb+'), pickle.HIGHEST_PROTOCOL)
 
 
-    points = pickle.load(open(outfile))
+    points = pickle.load(open(outfile, 'rb+'))
+    # points = result
     print('loading', opt.model, 'done.')
 
     print(points[2550 * 1275 + 1274])

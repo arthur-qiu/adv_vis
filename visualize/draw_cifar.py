@@ -182,7 +182,6 @@ for data, target in test_loader:
         if np.abs(np.sum(uu * v)) < 1e-5:
             v = v.reshape((32, 32, 3))
             break
-    pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label), 'wb+'))
 
     samples = 255 / 0.2
 
@@ -199,7 +198,8 @@ for data, target in test_loader:
     pickle.dump(result, open(outfile, 'wb+'), pickle.HIGHEST_PROTOCOL)
 
 
-    points = pickle.load(open(outfile))
+    points = pickle.load(open(outfile, 'rb+'))
+    # points = result
     print('loading', opt.model, 'done.')
 
     print(points[2550 * 1275 + 1274])
@@ -219,7 +219,7 @@ for data, target in test_loader:
     middle = 255 * 5
     plt.figure()
     n, bins, patches = plt.hist(g.flatten(), 10, normed=1, facecolor='green', alpha=0.75)
-    plt.savefig('boundry_figs/cifar/{}_model3_hist.png'.format(data_type), format='png')
+    plt.savefig('boundry/cifar/{}_model3_hist.png'.format(data_type), format='png')
     for bound in [40, 100, 500, 1000, middle]:
         plt.clf()
         plt.figure(figsize=(16,12))
@@ -233,9 +233,10 @@ for data, target in test_loader:
         plt.plot([0, 0], [-255, 255], color='white')
         plt.plot([-255, 255], [0, 0], color='white')
         print("bound:{}, fname:{}".format(bound,data_type))
-        plt.savefig('boundry_figs/cifar/{}_model3_{}.png'.format(data_type, bound), format='png')
+        plt.savefig('boundry/cifar/{}_model3_{}.png'.format(data_type, bound), format='png')
 
 
     break
+
 
 
