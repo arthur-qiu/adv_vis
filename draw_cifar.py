@@ -68,10 +68,16 @@ class PrivateOptions(BaseOptions):
 
         self.parser.add_argument('--lr_search', type=int, default=2550,
                             help='Learning rate of each iteration.')
+        self.parser.add_argument('--save_name', type=str, default='wrn',
+                                 help='name of saving.')
         self.parser.set_defaults(batch_size=1)
         self.parser.set_defaults(test_bs=1)
 
 opt = PrivateOptions().parse()
+
+save_folder = "boundry/" + opt.save_name
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
 
 state = {k: v for k, v in opt._get_kwargs()}
 
@@ -146,21 +152,20 @@ for data, target in test_loader:
     g = g.transpose(0, 2, 3, 1)
     g = g.squeeze(axis=0)
     label = target[0]
-    # filename = 'boundry/gradients/{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)
+    # filename = 'boundry/gradients/{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.save_name, index, label)
     # print(filename)
     # pickle.dump(g, open(filename, 'w'), pickle.HIGHEST_PROTOCOL)
     #
     #
     # base = 'boundry/gradients/'
-    # u = pickle.load(open(base + '{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.model, index, label)))
+    # u = pickle.load(open(base + '{}_{}_{}_{}_cifar.pickle'.format(data_type, opt.save_name, index, label)))
 
-    base = 'boundry/gradients/'
     u = g.copy()
     result = []
     # normolization
     u /= np.sqrt(np.sum(u ** 2))
-    # if os.path.isfile(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)):
-    #     v = pickle.load(open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label)))
+    # if os.path.isfile(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.save_name, index, label)):
+    #     v = pickle.load(open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.save_name, index, label)))
     # else:
     #     while True:
     #         uu = u.reshape(32 * 32 * 3)
@@ -171,7 +176,7 @@ for data, target in test_loader:
     #         if np.abs(np.sum(uu * v)) < 1e-5:
     #             v = v.reshape((32, 32, 3))
     #             break
-    #     pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.model, index, label), 'wb+'))
+    #     pickle.dump(v, open(base + '{}_{}_{}_{}_cifar.v.pickle'.format(data_type, opt.save_name, index, label), 'wb+'))
 
     while True:
         uu = u.reshape(32 * 32 * 3)
@@ -194,13 +199,13 @@ for data, target in test_loader:
         # a = search_direction(sess, model, x, v, image, label, batch_size)
         result += [(i * 0.2, t[0], t[1]) for t in a]
 
-    outfile = 'boundry/swipe-for-{}-{}-{}-{}-cifar.pickle'.format(data_type, opt.model, index, label)
+    outfile = '{}/swipe-for-{}-{}-{}-{}-cifar.pickle'.format(save_folder, data_type, opt.save_name, index, label)
     pickle.dump(result, open(outfile, 'wb+'), pickle.HIGHEST_PROTOCOL)
 
 
     points = pickle.load(open(outfile, 'rb+'))
     # points = result
-    print('loading', opt.model, 'done.')
+    print('loading', opt.save_name, 'done.')
 
     print(points[2550 * 1275 + 1274])
 
@@ -219,7 +224,7 @@ for data, target in test_loader:
     middle = 255 * 5
     plt.figure()
     n, bins, patches = plt.hist(g.flatten(), 10, normed=1, facecolor='green', alpha=0.75)
-    plt.savefig('boundry/cifar/{}_model3_hist.png'.format(data_type), format='png')
+    plt.savefig('{}/{}-{}_model_hist.png'.format(save_folder, index, opt.save_name), format='png')
     for bound in [40, 100, 500, 1000, middle]:
         plt.clf()
         plt.figure(figsize=(16,12))
@@ -233,10 +238,12 @@ for data, target in test_loader:
         plt.plot([0, 0], [-255, 255], color='white')
         plt.plot([-255, 255], [0, 0], color='white')
         print("bound:{}, fname:{}".format(bound,data_type))
-        plt.savefig('boundry/cifar/{}_model3_{}.png'.format(data_type, bound), format='png')
+        plt.savefig('{}/{}-{}_model_{}.png'.format(save_folder, index, opt.save_name, bound), format='png')
 
-
-    break
+    plt.close()
+    print(index, label)
+    if index > 20:
+        break
 
 
 
